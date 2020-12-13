@@ -1,3 +1,5 @@
+// Code with errors removed. The allocator used for heap is first fit and garbage collector is golang's gc
+
 parameter array1_row = 512;
 parameter array1_clm = 512;
 parameter array2_stack_row = 256;
@@ -48,8 +50,8 @@ logic memory_physical_arr2_queue [arr2_arrays_queue][array2_queue_row][array2_qu
 
 // pointers for data structures
 static integer stack_ptr_1 = stack_arr1_limit + stack_arr2_limit;
-static integer q_ptr_front = 0;         //2,7
-static integer q_ptr_rear = 0;			//2,8
+static integer q_ptr_front = 0;         
+static integer q_ptr_rear = 0;			
 static integer physical_config_q_clm_front = 0;
 static integer physical_config_q_row_front = 0;
 static integer physical_config_q_arr_front = 0;
@@ -61,77 +63,88 @@ static integer q_row_front;
 //1 bit for determining is free or not 0 (0)
 
 
-static integer cnt = 0;             // 0,0  // to determine when gc will be triggered
-static integer stack_row = 0;       //0,1   
-static integer stack_clm = 0;       //0,3
-static integer stack_arr = 0;		//0,4
-static integer stack_config = 0;    //0,5
+reg [31:0] cnt = 0;               // to determine when gc will be triggered
+static integer icount=0;
+static integer icnt = 0;
+reg [31:0] tempcnt=0;
+reg [31:0]countarr;
+reg [31:0]countarr1;
+integer q1 = 0;
+integer q = 0;
+static integer stack_row = 0;           
+static integer stack_clm = 0;        
+static integer stack_arr = 0;		 
+static integer stack_config = 0;     
 
-static integer q_row = arr1_queue_start;			//0,6
-static integer q_clm = 0;			//0,7
-static integer q_arr = 0;			//0,8
-static integer q_config = 0;		//0,9
+static integer q_row = arr1_queue_start;			 
+static integer q_clm = 0;			 
+static integer q_arr = 0;			 
+static integer q_config = 0;		 
 
 
-static integer heap_row;		//0,10
-static integer heap_clm = 0;		//0,11
-static integer heap_arr = 0;		//0,12
+static integer heap_row;		 
+static integer heap_clm = 0;		 
+static integer heap_arr = 0;		 
 
 
-static integer stack2_arr;				//0,13
-static integer stack2_row_ptr = arr1_stack1_start;		//0,14
-static integer stack2_clm_ptr = 0;		//0,15
+static integer stack2_arr;				 
+static integer stack2_row_ptr = arr1_stack1_start;		 
+static integer stack2_clm_ptr = 0;		 
  
-static integer physical_config_row = 0;         //1,3
-static integer physical_config_arr = 0;			//1,4
-static integer physical_config_clm = 0;			//1,5
+static integer physical_config_row = 0;         
+static integer physical_config_arr = 0;			
+static integer physical_config_clm = 0;			
 
 
 
-static integer physical_config_q_row = 0;		//1,6
-static integer physical_config_q_arr = 0;		//1,7
-static integer physical_config_q_clm = 0;		//1,8
+static integer physical_config_q_row = 0;		
+static integer physical_config_q_arr = 0;		
+static integer physical_config_q_clm = 0;		
 
-
-integer i;                                         //1,10
-integer j;											//1,11
-integer div;										//1,12
-integer p;											//1,13
-integer column_alloc;								//1,14
-integer alloc_success;								//1,15
-reg temp;										//2,0
-reg temp1;									//2,1
-reg temp2;									//2,2
-reg temp3; // temporary registers				//2,3
-reg [12:0]temp_dynamic_num = 0;							//2,4	
+integer tn;
+integer k2;
+integer y2;
+integer t3;
+integer i;                                         
+integer j;											
+integer div;										
+integer p;											
+integer column_alloc;								
+integer alloc_success;
+integer n1;								
+reg temp;										 
+reg temp1;									 
+reg temp2;									 
+reg temp3; // temporary registers				 
+reg [12:0]temp_dynamic_num = 0;							 	
 reg gc;
  // temporary registers and integers for gc
 
-integer i1;    //2,6
-integer j1;		//2,7
-integer k;		//2,8
-integer m;		//2,9
-integer n;		//2,10
-integer cnt_c;	//2,11
-integer x;		//2,12
-integer l;		//2,13
-integer y;		//2,14
-integer a;		//2,15
-integer b;		//3,0
-integer c;		//3,1
-reg [23:0]tempx;   //3,3
+integer arr_funct;     
+integer j1;		 
+integer k;		 
+integer m;		 
+integer n;		 
+integer cnt_c;	 
+integer x;		 
+integer l;		 
+integer y;		 
+integer a;		 
+integer b;		
+integer c;		
+reg [23:0]tempx;   
 reg [12:0]final_temp;
-reg [23:0]treg;		//3,4
-reg [23:0]temp_c;		//3,5
-reg [23:0]num1;				//3,7
-reg [23:0]temp_reg;			//3,8
-reg [23:0]temp_reg_1;		//3,9
-reg [2:0]sizex;				//3,12
-reg [2:0]sizey;				//3,13
-reg [7:0]tempx_1;			//4,0
-reg [7:0]tempx_2;    		//4,1
-reg [4:0]t1;				//4,2
-reg [7:0]t2;      			//4,3  	// temporary registers
+reg [23:0]treg;		
+reg [23:0]temp_c;		
+reg [23:0]num1;				
+reg [23:0]temp_reg;			
+reg [23:0]temp_reg_1;		
+reg [2:0]sizex;				
+reg [2:0]sizey;				
+reg [7:0]tempx_1;			
+reg [7:0]tempx_2;    		
+reg [4:0]t1;				
+reg [7:0]t2;      			  
 reg [12:0]temp13;
 
 static integer space;
@@ -148,6 +161,20 @@ static integer zen_physical;
 // The stack has been seperated into two parts. One part is dedicated to dynamic memory allocation and other is dedicated 
 // to non-dynamic memory allocation
  
+module count_obj ();
+always@(*)
+begin
+for (icount=0;icount<arr1_arrays;icount++)
+begin
+for (icnt=0;icnt<32;icnt++)
+begin
+tempcnt[icnt] = memory_physical_arr1[arr1_arrays][511][icnt];
+end
+cnt = cnt + tempcnt;
+end
+end
+endmodule
+
 
 // to determine physical address from a given logical address 
 module logical_to_physical_address( input logic [31:0]stack_logic_ptr, output logic arr_type, output logic [31:0]physical_row, 
@@ -250,8 +277,15 @@ begin
 						memory_physical_arr1[heap_arr][heap_row][space + heap_width - 1] = 1;
 						if (gc==1)
 						memory_physical_arr1[heap_arr][heap_row][space + heap_width - 6] = 1;  //if its allocated in the middle of gc, colour will be grey 
-						cnt = cnt + 1;
-						
+						for (q=0;q<31;q++)
+						begin
+						countarr[q] = memory_physical_arr1[heap_arr][511][q];
+						end
+						countarr = countarr + 1;
+						for (q=0;q<31;q++)
+						begin
+						memory_physical_arr1[heap_arr][511][q] = countarr[q];
+						end
 						if (topnode == 1)
 						begin
 						temp_dynamic_num[4:0] = heap_clm;
@@ -283,7 +317,15 @@ begin
 						memory_physical_arr1[heap_arr][heap_row][space + heap_width - 1] = 1;
 						if (gc==1)
 						memory_physical_arr1[heap_arr][heap_row][space + heap_width - 6] = 1;
-						cnt = cnt + 1;
+						for (q=0;q<31;q++)
+						begin
+						countarr[q] = memory_physical_arr1[heap_arr][511][q];
+						end
+						countarr = countarr + 1;
+						for (q=0;q<31;q++)
+						begin
+						memory_physical_arr1[heap_arr][511][q] = countarr[q];
+						end
 						if (topnode==1)
 						begin
 						temp_dynamic_num[4:0] = heap_clm;
@@ -373,7 +415,15 @@ begin
 						memory_physical_arr1[heap_arr][heap_row][space + heap_width - 6] = 1;
 						memory_physical_arr1[heap_arr][heap_row][space1 + heap_width - 6] = 1;
 						end						
-						cnt = cnt + 1;
+						for (q=0;q<31;q++)
+						begin
+						countarr[q] = memory_physical_arr1[heap_arr][511][q];
+						end
+						countarr = countarr + 2;
+						for (q=0;q<31;q++)
+						begin
+						memory_physical_arr1[heap_arr][511][q] = countarr[q];
+						end
 						if (topnode == 1)
 						begin
 						temp_dynamic_num[4:0] = heap_clm;
@@ -413,7 +463,15 @@ begin
 						memory_physical_arr1[heap_arr][heap_row][space + heap_width - 6] = 1;
 						memory_physical_arr1[heap_arr][heap_row][space1 + heap_width - 6] = 1;
 						end
-						cnt = cnt + 1;
+						for (q=0;q<31;q++)
+						begin
+						countarr[q] = memory_physical_arr1[heap_arr][511][q];
+						end
+						countarr = countarr + 2;
+						for (q=0;q<31;q++)
+						begin
+						memory_physical_arr1[heap_arr][511][q] = countarr[q];
+						end
 						if (topnode==1)
 						begin
 						temp_dynamic_num[4:0] = heap_clm;
@@ -511,7 +569,15 @@ begin
 						memory_physical_arr1[heap_arr][heap_row][space1 + heap_width - 6] = 1;
 						memory_physical_arr1[heap_arr][heap_row][space2 + heap_width - 6] = 1;
 						end
-						cnt = cnt + 1;
+						for (q=0;q<31;q++)
+						begin
+						countarr[q] = memory_physical_arr1[heap_arr][511][q];
+						end
+						countarr = countarr + 3;
+						for (q=0;q<31;q++)
+						begin
+						memory_physical_arr1[heap_arr][511][q] = countarr[q];
+						end
 						if (topnode==1)
 						begin
 						temp_dynamic_num[4:0] = heap_clm;
@@ -560,7 +626,15 @@ begin
 						memory_physical_arr1[heap_arr][heap_row][space1 + heap_width - 6] = 1;
 						memory_physical_arr1[heap_arr][heap_row][space2 + heap_width - 6] = 1;
 						end
-						cnt = cnt + 1;
+						for (q=0;q<31;q++)
+						begin
+						countarr[q] = memory_physical_arr1[heap_arr][511][q];
+						end
+						countarr = countarr + 3;
+						for (q=0;q<31;q++)
+						begin
+						memory_physical_arr1[heap_arr][511][q] = countarr[q];
+						end
 						if (topnode==1)
 						begin
 						temp_dynamic_num[4:0] = heap_clm;
@@ -664,7 +738,15 @@ begin
 						memory_physical_arr1[heap_arr][heap_row][space2 + heap_width - 6] = 1;
 						memory_physical_arr1[heap_arr][heap_row][space3 + heap_width - 6] = 1;
 						end
-						cnt = cnt + 1;
+						for (q=0;q<31;q++)
+						begin
+						countarr[q] = memory_physical_arr1[heap_arr][511][q];
+						end
+						countarr = countarr + 4;
+						for (q=0;q<31;q++)
+						begin
+						memory_physical_arr1[heap_arr][511][q] = countarr[q];
+						end
 						if (topnode==1)
 						begin
 						temp_dynamic_num[4:0] = heap_clm;
@@ -716,7 +798,15 @@ begin
 						memory_physical_arr1[heap_arr][heap_row][space2 + heap_width - 6] = 1;
 						memory_physical_arr1[heap_arr][heap_row][space3 + heap_width - 6] = 1;
 						end
-						cnt = cnt + 1;
+						for (q=0;q<31;q++)
+						begin
+						countarr[q] = memory_physical_arr1[heap_arr][511][q];
+						end
+						countarr = countarr + 4;
+						for (q=0;q<31;q++)
+						begin
+						memory_physical_arr1[heap_arr][511][q] = countarr[q];
+						end
 						if (topnode==1)
 						begin
 						temp_dynamic_num[4:0] = heap_clm;
@@ -1025,8 +1115,7 @@ endmodule
 
 
 // golang's tricolour garbage collector
-module garbage_collection_g1 (input logic arr1_arrays_gc_start, 
-input logic arr1_arrays_gc_end);
+module garbage_collection_g1 (input logic arr_funct);
 
 
 always@(posedge gc)
@@ -1035,8 +1124,6 @@ begin
 
 // then go to the stack for dynamic allocation and check each stack block one by one and colour the raechable objects grey
 
-for (i1=arr1_arrays_gc_start;i1<arr1_arrays_gc_end;i1++)
-begin
 	for (j1=arr1_stack1_start;j1<=arr1_stack1_end;j1++)
 	begin
 		for (k=0;k<=arr1_stack1_clm_end;k++)
@@ -1045,80 +1132,80 @@ begin
 			space_gc = stack2_width * k;
 			for (i=0;i<5;i++)
 			begin
-			t1[i] = memory_physical_arr1[i1][j1][space_gc+stack2_width-1-i];
+			t1[i] = memory_physical_arr1[arr_funct][j1][space_gc+stack2_width-1-i]; //t1 is to determine column address
 			end
+			tn = t1 * heap_width;
 			for (i=0;i<8;i++)
 			begin
-			t2[i] = memory_physical_arr1[i1][j1][space_gc+stack2_width-6-i];
+			t2[i] = memory_physical_arr1[arr_funct][j1][space_gc+stack2_width-6-i]; //t2 is to determine row address
 			end
-			sizey[0] = memory_physical_arr1[i1][t2+arr1_heap_start][t1+heap_width-3];
-			sizey[1] = memory_physical_arr1[i1][t2+arr1_heap_start][t1+heap_width-4];
-			sizey[2] = memory_physical_arr1[i1][t2+arr1_heap_start][t1+heap_width-5];
+			sizey[0] = memory_physical_arr1[arr_funct][t2+arr1_heap_start][tn+heap_width-3];
+			sizey[1] = memory_physical_arr1[arr_funct][t2+arr1_heap_start][tn+heap_width-4];
+			sizey[2] = memory_physical_arr1[arr_funct][t2+arr1_heap_start][tn+heap_width-5];
 			for (n=0;n<sizey;n++)
 			begin
-			
-				memory_physical_arr1[i1][t2][t1 + n + heap_width - 6] = 0;
-				memory_physical_arr1[i1][j1][t1 + n + heap_width - 7] = 1;       // 01 is for grey colour
+				n1 = n * heap_width;
+				memory_physical_arr1[arr_funct][t2][tn + n1 + heap_width - 6] = 1;
+				memory_physical_arr1[arr_funct][t2][tn + n1 + heap_width - 7] = 0;       // 01 is for grey colour
 	   
 			end
 		end
 	end
-end
+
 
 
 for (l=0;l<depth_of_graph;l++)          // the depth of the heap graph is limited to 10
 begin
 
 	cnt_c = 0;
-	for (i1=arr1_arrays_gc_start;i1<arr1_arrays_gc_end;i1++)
-	begin
 		for (j1=arr1_heap_start;j1<=arr1_heap_end;j1++)
 		begin
 			for (k=0;k<arr1_heap_clm_end;k++)
 			begin
-
-	for (i=0;i<heap_width;i++)
-	begin
-	tempx[i] = memory_physical_arr1[i1][j1][k+heap_width-1-i];
-	end
-	sizex = tempx[4:2];               // one object can point to a maximum of 4 objects so the max value of sizex is 4
-	if (tempx[5] == 1 && tempx[6]==0)
-	begin
-	cnt_c = cnt_c + 1;
-	if (tempx[7]==1)
-	begin
-	for (y=0;y<sizex;y++)
-	begin
-	for (i=0;i<heap_width;i++)
-	begin
-	num1[i] = memory_physical_arr1[i1][j1][k+y+heap_width-1-i];
-	end
-	tempx_1 = num1[12:8];
-	tempx_2 = num1[20:13];
-	for (i=0;i<heap_width;i++)
-	begin
-	temp_reg[i] = memory_physical_arr1[i1][tempx_2 + arr1_heap_start][tempx_1 + heap_width-1-i];
-	end
-	temp_reg[6:5] = 2'b01;
-	for (i=0;i<heap_width;i++)
-	begin
-	memory_physical_arr1[i1][tempx_2 + arr1_heap_start][tempx_1 + heap_width-1-i] = temp_reg[i];    // choosing a parent object and colouring their child objects with grey
-	end
-	end
-	end
-	for (i=0;i<heap_width;i++)
-	begin
-	temp_reg_1[i] = memory_physical_arr1[i1][j1][k+heap_width-1-i];
-	end
-	temp_reg_1[6:5] = 2'b11;
-	for (i=0;i<heap_width;i++)
-	begin
-	memory_physical_arr1[i1][j1][k+heap_width-1-i] = temp_reg_1[i];    // 11 is for black colour
-	end
-	end
-	end
-	end
-	end
+				k2 = k*heap_width;
+				for (i=0;i<heap_width;i++)
+				begin
+					tempx[i] = memory_physical_arr1[arr_funct][j1][k2+heap_width-1-i];
+				end
+				sizex = tempx[4:2];               // one object can point to a maximum of 4 objects so the max value of sizex is 4
+				if (tempx[5] == 1 && tempx[6]==0) 
+				begin
+					cnt_c = cnt_c + 1;
+					if (tempx[7]==1)
+					begin
+						for (y=0;y<sizex;y++)
+						begin
+						y2 = y*heap_width;
+						for (i=0;i<heap_width;i++)
+						begin
+							num1[i] = memory_physical_arr1[arr_funct][j1][k2+y2+heap_width-1-i];
+						end
+						tempx_1 = num1[12:8];
+						tempx_2 = num1[20:13];
+						t3 = tempx_1 * heap_width;
+						for (i=0;i<heap_width;i++)
+						begin
+							temp_reg[i] = memory_physical_arr1[arr_funct][tempx_2 + arr1_heap_start][t3 + heap_width-1-i];
+						end
+						temp_reg[6:5] = 2'b01; // colour the referenced objects grey
+						for (i=0;i<heap_width;i++)
+						begin
+							memory_physical_arr1[arr_funct][tempx_2 + arr1_heap_start][t3 + heap_width-1-i] = temp_reg[i];    // choosing a parent object and colouring their child objects with grey
+						end
+						end
+						end
+					for (i=0;i<heap_width;i++)
+					begin
+						temp_reg_1[i] = memory_physical_arr1[arr_funct][j1][k2+heap_width-1-i];
+					end
+					temp_reg_1[6:5] = 2'b11;  // colour the objects black
+					for (i=0;i<heap_width;i++)
+					begin
+						memory_physical_arr1[arr_funct][j1][k2+heap_width-1-i] = temp_reg_1[i];    // 11 is for black colour
+					end
+				end
+			end
+		end
 	if (cnt_c == 0)
 	begin
 	break;
@@ -1128,8 +1215,7 @@ begin
 end
 
 
-for (i1=arr1_arrays_gc_start;i1<arr1_arrays_gc_end;i1++)
-begin
+
 	for (j1=arr1_heap_start;j1<=arr1_heap_end;j1++)
 	begin
 		for (k=0;k<heap_width;k++)
@@ -1138,22 +1224,29 @@ begin
 			space_gc = k * heap_width;
 			for (i=0;i<heap_width;i++)
 			begin
-			temp_c[i] = memory_physical_arr1[i1][j1][space_gc+heap_width-1-i];
+			temp_c[i] = memory_physical_arr1[arr_funct][j1][space_gc+heap_width-1-i];
 			end
-			if (temp_c[6:5] == 2'b00 && temp_c[0]==1)
+			if (temp_c[6:5] == 2'b00 && temp_c[0]==1) // if the object is free but its of white colour, then it has to be collected
 			begin
 				temp_c[0] = 0;
-				cnt = cnt - 1;
+				for (q1=0;q1<31;q1++)
+				begin
+				countarr1[q1] = memory_physical_arr1[arr_funct][511][q1];
+				end
+				countarr1 = countarr1 - 1;
+				for (q1=0;q1<31;q1++)
+				begin
+				memory_physical_arr1[arr_funct][511][q1] = countarr1[q1];
+				end
 				for (i=0;i<heap_width;i++)
 				begin
-				memory_physical_arr1[i1][j1][space_gc+heap_width-1-i] = temp_c[i];
+				memory_physical_arr1[arr_funct][j1][space_gc+heap_width-1-i] = temp_c[i];
 				end
 				final_temp[4:0] = k;
 				final_temp[12:5] = j1;
 				
 
-				for (a=arr1_arrays_gc_start;a<arr1_arrays_gc_end;a++)
-				begin
+				
 					for (b=arr1_stack1_start;b<=arr1_stack1_end;b++)
 					begin
 						for (c=0;c<arr1_stack1_clm_end;c++)
@@ -1161,13 +1254,13 @@ begin
 							space_gc1 = c * stack2_width;
 							for (i=0;i<stack2_width;i++)
 							begin
-							temp13[i] = memory_physical_arr1[a][b][space_gc1+stack2_width-1-i];
+							temp13[i] = memory_physical_arr1[arr_funct][b][space_gc1+stack2_width-1-i];
 							end
 							if (temp13 == final_temp)
 							begin
 								for (i=0;i<stack2_width;i++)
 								begin
-								memory_physical_arr1[a][b][space_gc1+stack2_width-1-i] = 1'bx;
+								memory_physical_arr1[arr_funct][b][space_gc1+stack2_width-1-i] = 1'bx;
 								end
 								break;
 							end
@@ -1175,7 +1268,7 @@ begin
 						break;
 					end
 					break;
-				end
+				
 
 			end
 			else
@@ -1184,14 +1277,14 @@ begin
 				temp_c[6:5] = 2'b00;
 				for (i=0;i<heap_width;i++)
 				begin
-				memory_physical_arr1[i1][j1][space_gc+heap_width-1-i] = temp_c[i];
+				memory_physical_arr1[arr_funct][j1][space_gc+heap_width-1-i] = temp_c[i];
 				end
 			end
 		end
 
 	end
 end
-end
+
 
 endmodule
 
@@ -1201,9 +1294,9 @@ endmodule
 module gc_total();
 genvar jk;	
 generate
-for (jk = 0;jk < (arr1_arrays/8); jk++)
+for (jk = 0;jk < arr1_arrays; jk++)
 begin
-garbage_collection_g1 A1 (jk*8,(jk*8)+7);
+garbage_collection_g1 A1 (jk);
 end
 endgenerate
 endmodule
