@@ -22,7 +22,7 @@ is used to tell how many elements are there in its corresponding heap block. If 
 100 for four elements. Bit number 5-6 is used to tell what is the colour of the heap element. 00 means its of white colour, 01 means it is of grey colour, 11 means it is of 
 black colour. The colour coding will be used later on in golang's garbage collection. Bit number 7 is used to tell if the heap element is referring to some other heap element or not.
 If the value is 1, then its referring to some other heap element and the address of the heap element which it is corresponding to will be stored in the data field of that heap element.
-We know that heap will form a tree like data structure, the address of the topmost node of that tree will be stored in stack2. The heap values are store in address ordered best fit allocation and in bitmap allocation scheme as mentioned in the code of bestfit_golang.sv and bitmap_golang.sv respectively.
+We know that heap will form a tree like data structure, the address of the topmost node of that tree will be stored in stack2. The heap values are store in address ordered best fit allocation and in bitmap allocation scheme as mentioned in the code of bestfit_gc2.sv and bitmap_golang.sv respectively.
 scheme.
 
 Queue : Queue is the simplest of all the corresponding three data structure, and the data storage is in FIFO fashion. It has two pointers, head and tail. As the data is stored in the
