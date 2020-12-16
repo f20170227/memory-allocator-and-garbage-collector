@@ -85,7 +85,9 @@ static integer q_config = 0;
 
 
 integer bm_row = 0;		 
-integer bm_clm = 0;		 
+integer bm_clm = 0;
+integer bm_row_gc;		 
+integer bm_clm_gc;		 		 
 integer heap_arr = 0;		 
 
 
@@ -103,6 +105,7 @@ static integer physical_config_q_row = 0;
 static integer physical_config_q_arr = 0;		
 static integer physical_config_q_clm = 0;		
 
+integer gc1_cnt;
 integer tn;
 integer k2;
 integer y2;
@@ -166,6 +169,13 @@ integer tempb3;
 integer tempb4;
 integer ibm;
 integer jbm;
+
+integer tempb1_gc;
+integer tempb2_gc;
+integer tempb3_gc;
+integer tempb4_gc;
+integer ibm_gc;
+integer jbm_gc;
 // The stack has been seperated into two parts. One part is dedicated to dynamic memory allocation and other is dedicated 
 // to non-dynamic memory allocation
  
@@ -1148,74 +1158,82 @@ begin
 end
 
 
-
-	for (j1=arr1_heap_start;j1<=arr1_heap_end;j1++)
-	begin
-		for (k=0;k<heap_width;k++)
-		begin                         // garbage collect the objects which are of white colour
-
-			space_gc = k * heap_width;
-			for (i=0;i<heap_width;i++)
+		for (ibm_gc = arr1_bitmap_start;ibm_gc<511;ibm_gc++)
+		begin
+			for (jbm_gc = 0;jbm_gc<array1_clm;jbm_gc++)
 			begin
-			temp_c[i] = memory_physical_arr1[arr_funct][j1][space_gc+heap_width-1-i];
-			end
-			if (temp_c[6:5] == 2'b00 && temp_c[0]==1) // if the object is free but its of white colour, then it has to be collected
-			begin
-				temp_c[0] = 0;
-				for (q1=0;q1<31;q1++)
+				if (memory_physical_arr1[heap_arr][ibm][jbm] == 1)
 				begin
-				countarr1[q1] = memory_physical_arr1[arr_funct][511][q1];
-				end
-				countarr1 = countarr1 - 1;
-				for (q1=0;q1<31;q1++)
-				begin
-				memory_physical_arr1[arr_funct][511][q1] = countarr1[q1];
-				end
-				for (i=0;i<heap_width;i++)
-				begin
-				memory_physical_arr1[arr_funct][j1][space_gc+heap_width-1-i] = temp_c[i];
-				end
-				final_temp[4:0] = k;
-				final_temp[12:5] = j1;
-				
-
-				
-					for (b=arr1_stack1_start;b<=arr1_stack1_end;b++)
+					tempb1_gc = ibm_gc;
+					tempb2_gc = jbm_gc;
+					tempb1_gc = tempb1_gc - arr1_bitmap_start;
+					bm_row_gc = tempb1_gc * (arr1_bm_clm_end - arr1_bm_clm_start + 1);
+					tempb3_gc = jbm_gc/(arr1_bm_clm_end - arr1_bm_clm_start + 1);
+					tempb4_gc = tempb3_gc * (arr1_bm_clm_end - arr1_bm_clm_start + 1);
+					tempb2_gc = tempb2_gc - tempb4_gc;
+					bm_row_gc = bm_row_gc + tempb3_gc;
+					bm_clm_gc = tempb2_gc;
+					space_gc = bm_clm_gc * heap_width;
+					for (i=0;i<heap_width;i++)
 					begin
-						for (c=0;c<arr1_stack1_clm_end;c++)
+					temp_c[i] = memory_physical_arr1[arr_funct][j1][space_gc+heap_width-1-i];
+					end
+					if (temp_c[6:5] == 2'b00)
+					begin
+						temp_c[0] = 0;
+						memory_physical_arr1[heap_arr][ibm_gc][jbm_gc] = 0;
+						for (q1=0;q1<31;q1++)
 						begin
-							space_gc1 = c * stack2_width;
-							for (i=0;i<stack2_width;i++)
+						countarr1[q1] = memory_physical_arr1[arr_funct][511][q1];
+						end
+						countarr1 = countarr1 - 1;
+						for (q1=0;q1<31;q1++)
+						begin
+						memory_physical_arr1[arr_funct][511][q1] = countarr1[q1];
+						end
+						for (i=0;i<heap_width;i++)
+						begin
+						memory_physical_arr1[arr_funct][j1][space_gc+heap_width-1-i] = temp_c[i];
+						end
+						final_temp[4:0] = k;
+						final_temp[12:5] = j1;
+						for (b=arr1_stack1_start;b<=arr1_stack1_end;b++)
+						begin
+							gc1_cnt = 0;
+							for (c=0;c<arr1_stack1_clm_end;c++)
 							begin
-							temp13[i] = memory_physical_arr1[arr_funct][b][space_gc1+stack2_width-1-i];
-							end
-							if (temp13 == final_temp)
-							begin
+								space_gc1 = c * stack2_width;
 								for (i=0;i<stack2_width;i++)
 								begin
-								memory_physical_arr1[arr_funct][b][space_gc1+stack2_width-1-i] = 1'bx;
+								temp13[i] = memory_physical_arr1[arr_funct][b][space_gc1+stack2_width-1-i];
 								end
-								break;
+								if (temp13 == final_temp)
+								begin
+									for (i=0;i<stack2_width;i++)
+									begin
+									memory_physical_arr1[arr_funct][b][space_gc1+stack2_width-1-i] = 1'bx;
+									end
+									gc1_cnt = 1;
+									break;
+								end
 							end
+							if (gc1_cnt == 1)
+							break;
 						end
-						break;
+						
 					end
-					break;
-				
-
-			end
-			else
-			begin
-				if (temp_c[6:5] == 2'b11)
-				temp_c[6:5] = 2'b00;
-				for (i=0;i<heap_width;i++)
-				begin
-				memory_physical_arr1[arr_funct][j1][space_gc+heap_width-1-i] = temp_c[i];
+					
+					if (temp_c[6:5] == 2'b11)
+					temp_c[6:5] = 2'b00;
+					for (i=0;i<heap_width;i++)
+					begin
+					memory_physical_arr1[arr_funct][j1][space_gc+heap_width-1-i] = temp_c[i];
+					end	
+					
 				end
 			end
 		end
 
-	end
 end
 
 
