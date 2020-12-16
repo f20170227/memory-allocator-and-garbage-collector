@@ -1,4 +1,4 @@
-// Code with errors removed. The allocator used for heap is first fit and garbage collector is golang's gc
+// Code with errors removed. The allocator used for heap is address ordered best fit and garbage collector is golang's gc
 
 parameter array1_row = 512;
 parameter array1_clm = 512;
@@ -101,6 +101,7 @@ static integer physical_config_q_row = 0;
 static integer physical_config_q_arr = 0;		
 static integer physical_config_q_clm = 0;		
 
+integer gc1_cnt;
 integer tn;
 integer k2;
 integer y2;
@@ -1249,6 +1250,7 @@ end
 				
 					for (b=arr1_stack1_start;b<=arr1_stack1_end;b++)
 					begin
+					gc1_cnt = 0;
 						for (c=0;c<arr1_stack1_clm_end;c++)
 						begin
 							space_gc1 = c * stack2_width;
@@ -1258,6 +1260,7 @@ end
 							end
 							if (temp13 == final_temp)
 							begin
+								gc1_cnt = 1;
 								for (i=0;i<stack2_width;i++)
 								begin
 								memory_physical_arr1[arr_funct][b][space_gc1+stack2_width-1-i] = 1'bx;
@@ -1265,9 +1268,10 @@ end
 								break;
 							end
 						end
+						if (gc1_cnt == 1)
 						break;
 					end
-					break;
+					
 				
 
 			end
